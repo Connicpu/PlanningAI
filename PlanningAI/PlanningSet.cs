@@ -5,7 +5,7 @@ using System.Text;
 
 namespace PlanningAI
 {
-    public class Class1
+    public class PlanningSet
     {
     }
 }
