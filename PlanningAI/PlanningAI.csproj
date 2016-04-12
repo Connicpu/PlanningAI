@@ -38,8 +38,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AStar\AStar.cs" />
     <Compile Include="AStar\INode.cs" />
     <Compile Include="AStar\InternalNode.cs" />
+    <Compile Include="PlanningSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
