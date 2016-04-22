@@ -5,10 +5,12 @@ namespace PlanningAI.AStar
 {
     public interface INode<T> where T : INode<T>
     {
-        float TraversalCost { get; }
-        float Heuristic { get; }
+        float GetTraversalCost(T source);
+        float GetHeuristic(T goal);
 
         IEnumerable<T> Neighbors { get; }
+
+        bool Equivalent(T other);
     }
 }
 

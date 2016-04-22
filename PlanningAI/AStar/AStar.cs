@@ -14,15 +14,18 @@ namespace PlanningAI.AStar
 
     public class AStar<T> where T : INode<T>
     {
+        private const int MaxSteps = 300;
+        private int _steps;
         private readonly List<InternalNode<T>> _openList = new List<InternalNode<T>>();
         private readonly Dictionary<T, InternalNode<T>> _internalNodes = new Dictionary<T, InternalNode<T>>(); 
-        private InternalNode<T> _goalNode; 
+        private InternalNode<T> _goalNode;
 
         public T Start { get; set; }
         public T Goal { get; set; }
 
         private void Reset()
         {
+            _steps = 0;
             _openList.Clear();
             _internalNodes.Clear();
         }
@@ -47,6 +50,11 @@ namespace PlanningAI.AStar
             Reset();
             Start = start;
             Goal = goal;
+            var startInt = GetInternal(Start);
+
+            startInt.TotalCost = Start.GetHeuristic(Goal);
+            startInt.Open = true;
+            _openList.Add(startInt);
         }
 
         public IEnumerable<T> TraverseFromGoal()
@@ -54,7 +62,7 @@ namespace PlanningAI.AStar
             var node = _goalNode;
             yield return node.Data;
 
-            while (node.Parent != null)
+            while (!Equals(node.Data, Start))
             {
                 node = node.Parent;
                 yield return node.Data;
@@ -63,14 +71,22 @@ namespace PlanningAI.AStar
 
         public AStarResult Step()
         {
+            if (_steps > MaxSteps)
+            {
+                return AStarResult.Failed;
+            }
+
+            _steps += 1;
             if (_openList.Count == 0)
             {
                 return AStarResult.Failed;
             }
 
             var parent = _openList.Min();
+            parent.Closed = true;
+
             _openList.Remove(parent);
-            if (Equals(parent.Data, Goal))
+            if (parent.Data.Equivalent(Goal))
             {
                 _goalNode = parent;
                 return AStarResult.Found;
@@ -80,7 +96,10 @@ namespace PlanningAI.AStar
 
             foreach (var child in parent.Data.Neighbors)
             {
-                var cost = parent.GivenCost + child.TraversalCost;
+                if (child == null)
+                    continue;
+
+                var cost = parent.GivenCost + child.GetTraversalCost(parent.Data);
                 var childNode = GetInternal(child);
 
                 if (childNode.Open || childNode.Closed)
@@ -99,8 +118,9 @@ namespace PlanningAI.AStar
                 }
                 else
                 {
-                    var heuristic = child.Heuristic;
+                    var heuristic = child.GetHeuristic(Goal);
                     childNode.TotalCost = cost + heuristic;
+                    _openList.Add(childNode);
                 }
 
                 childNode.Parent = parent;
@@ -115,7 +135,10 @@ namespace PlanningAI.AStar
         {
             if (!_internalNodes.ContainsKey(node))
             {
-                _internalNodes[node] = new InternalNode<T>();
+                _internalNodes[node] = new InternalNode<T>
+                {
+                    Data = node
+                };
             }
 
             return _internalNodes[node];
